@@ -38,3 +38,56 @@ services:
       - "traefik.http.routers.traefik-secure.middlewares=user-auth@file"
       - "traefik.http.routers.traefik-secure.service=api@internal"
 ```
+
+```yaml
+api:
+  dashboard: true
+
+entryPoints:
+  web:
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+
+  websecure:
+    address: :443
+    http:
+      middlewares:
+        - secureHeaders@file
+        - nofloc@file
+      tls:
+        certResolver: letsencrypt
+
+  ssh:
+    address: :2222
+
+pilot:
+  dashboard: false
+
+providers:
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+  file:
+    filename: /configurations/dynamic.yml
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: dev.valentinhelies@gmail.com
+      storage: acme.json
+      keyType: EC384
+      httpChallenge:
+        entryPoint: web
+
+buypass:
+  acme:
+    email: dev.valentinhelies@gmail.com
+    storage: acme.json
+    caServer: https://api.buypass.com/acme/directory
+    keyType: EC256
+    httpChallenge:
+      entryPoint: web
+```
